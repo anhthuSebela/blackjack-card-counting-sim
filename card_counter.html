@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Blackjack Card Counting Practice</title>
+  <style>
+    body { font-family: Arial; text-align: center; margin-top: 40px; background: #0b3d91; color: #fff; }
+    button { padding: 10px 20px; font-size: 16px; margin: 10px; }
+    .card { font-size: 40px; margin-top: 20px; }
+    .stats { margin-top: 30px; font-size: 18px; }
+  </style>
+</head>
+<body>
+
+  <h1>🃏 Blackjack Card Counting Simulator</h1>
+  <button onclick="dealCard()">Deal Card</button>
+  <button onclick="resetDeck()">Reset Deck</button>
+
+  <div class="card" id="cardDisplay">Click "Deal Card" to start</div>
+
+  <div class="stats">
+    <p>Running Count: <span id="runningCount">0</span></p>
+    <p>Cards Remaining: <span id="cardsLeft">312</span></p>
+    <p>Decks Remaining: <span id="decksLeft">6</span></p>
+    <p>True Count: <span id="trueCount">0</span></p>
+  </div>
+
+  <script>
+    const suits = ['♠️', '♥️', '♦️', '♣️'];
+    const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+
+    let deck = [];
+    let runningCount = 0;
+    let totalDecks = 6;
+
+    function createDecks(numDecks) {
+      let d = [];
+      for (let n = 0; n < numDecks; n++) {
+        for (let suit of suits) {
+          for (let value of values) {
+            d.push({ value, suit });
+          }
+        }
+      }
+      return shuffle(d);
+    }
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function getHiLoValue(cardValue) {
+      if (['2', '3', '4', '5', '6'].includes(cardValue)) return 1;
+      if (['10', 'J', 'Q', 'K', 'A'].includes(cardValue)) return -1;
+      return 0;
+    }
+
+    function dealCard() {
+      if (deck.length === 0) {
+        alert("Deck is empty. Reset to play again.");
+        return;
+      }
+
+      const card = deck.pop();
+      const countChange = getHiLoValue(card.value);
+      runningCount += countChange;
+
+      document.getElementById("cardDisplay").innerText = `${card.value}${card.suit}`;
+      document.getElementById("runningCount").innerText = runningCount;
+      document.getElementById("cardsLeft").innerText = deck.length;
+
+      const decksRemaining = (deck.length / 52).toFixed(2);
+      const trueCount = decksRemaining > 0 ? (runningCount / decksRemaining).toFixed(2) : 0;
+
+      document.getElementById("decksLeft").innerText = decksRemaining;
+      document.getElementById("trueCount").innerText = trueCount;
+    }
+
+    function resetDeck() {
+      deck = createDecks(totalDecks);
+      runningCount = 0;
+      document.getElementById("runningCount").innerText = 0;
+      document.getElementById("cardsLeft").innerText = deck.length;
+      document.getElementById("decksLeft").innerText = totalDecks;
+      document.getElementById("trueCount").innerText = 0;
+      document.getElementById("cardDisplay").innerText = 'Deck Reset. Ready to deal.';
+    }
+
+    // Init on load
+    resetDeck();
+  </script>
+
+</body>
+</html>
