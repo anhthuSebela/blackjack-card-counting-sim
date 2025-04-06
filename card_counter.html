@@ -3,21 +3,165 @@
 <head>
   <title>Blackjack Card Counting Practice</title>
   <style>
-    body { font-family: Arial; text-align: center; margin-top: 40px; background: #0b3d91; color: #fff; }
-    button { padding: 10px 20px; font-size: 16px; margin: 10px; }
-    .card { font-size: 40px; margin-top: 20px; }
-    .stats { margin-top: 30px; font-size: 18px; }
+    body {
+      font-family: 'Georgia', serif;
+      text-align: center;
+      margin-top: 40px;
+      background: #0a8640;
+      color: #fff;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 10px;
+      border: none;
+      border-radius: 6px;
+      background-color: #fff;
+      color: #0a8640;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #f0f0f0;
+    }
+    .card-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 30px;
+    }
+    .playing-card {
+      width: 120px;
+      height: 170px;
+      background-color: white;
+      border: 2px solid #ffffff;
+      border-radius: 12px;
+      color: black;
+      position: relative;
+      font-size: 24px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+    .playing-card.red {
+      color: red;
+    }
+    .card-corner {
+      position: absolute;
+      font-size: 20px;
+    }
+    .top-left {
+      top: 8px;
+      left: 10px;
+    }
+    .bottom-right {
+      bottom: 8px;
+      right: 10px;
+      transform: rotate(180deg);
+    }
+    .card-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 50px;
+    }
+    .stats {
+      margin-top: 30px;
+      font-size: 18px;
+      display: none;
+    }
+
+    #deckVisual {
+      margin-left: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    
+
+
+    .deck-wrapper {
+  position: relative;
+  width: 60px;
+  height: 300px; /* full height for 6 decks */
+}
+
+#deckStack {
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    to top,
+    red,
+    red 4px,
+    #cc0000 4px,
+    #cc0000 5px
+  );
+  border: 2px solid #fff;
+  border-radius: 6px;
+  transition: height 0.3s ease;
+  position: absolute;
+  bottom: 0;
+}
+
+.deck-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* don't block clicks */
+}
+
+.deck-line {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: white;
+  opacity: 0.4;
+  transition: opacity 0.3s ease; /* Smooth transition */
+}
+
+.deck-line:nth-child(1) { top: calc(100% / 6 * 1); }
+.deck-line:nth-child(2) { top: calc(100% / 6 * 2); }
+.deck-line:nth-child(3) { top: calc(100% / 6 * 3); }
+.deck-line:nth-child(4) { top: calc(100% / 6 * 4); }
+.deck-line:nth-child(5) { top: calc(100% / 6 * 5); }
+
+#deckStack.shrinking .deck-line {
+  opacity: 0;
+}
+
+    
+
   </style>
 </head>
 <body>
 
-  <h1>🃏 Blackjack Card Counting Simulator</h1>
+  <h1>🃏 Blackjack Card Counting Practice</h1>
   <button onclick="dealCard()">Deal Card</button>
   <button onclick="resetDeck()">Reset Deck</button>
+  <button onclick="toggleStats()">Reveal Stats</button>
 
-  <div class="card" id="cardDisplay">Click "Deal Card" to start</div>
+  <div class="card-container">
+    <div id="cardDisplay">
+      <!-- Card will be rendered here -->
+    </div>
+    <div id="deckVisual">
+      <div class="deck-wrapper">
+        <div id="deckStack"></div>
+        <div class="deck-lines">
+          <div class="deck-line"></div>
+          <div class="deck-line"></div>
+          <div class="deck-line"></div>
+          <div class="deck-line"></div>
+          <div class="deck-line"></div>
+        </div>
+      </div>
+      <p style="margin-top: 10px;">Deck Stack</p>
+    </div>    
+  </div>
+  
 
-  <div class="stats">
+  <div class="stats" id="statsSection">
     <p>Running Count: <span id="runningCount">0</span></p>
     <p>Cards Remaining: <span id="cardsLeft">312</span></p>
     <p>Decks Remaining: <span id="decksLeft">6</span></p>
@@ -25,7 +169,7 @@
   </div>
 
   <script>
-    const suits = ['♠️', '♥️', '♦️', '♣️'];
+    const suits = ['♠', '♥', '♦', '♣'];
     const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 
     let deck = [];
@@ -58,6 +202,24 @@
       return 0;
     }
 
+    function renderCard(card) {
+      const cardEl = document.createElement('div');
+      cardEl.classList.add('playing-card');
+      if (['♥', '♦'].includes(card.suit)) {
+        cardEl.classList.add('red');
+      }
+
+      cardEl.innerHTML = `
+        <div class="card-corner top-left">${card.value}${card.suit}</div>
+        <div class="card-corner bottom-right">${card.value}${card.suit}</div>
+        <div class="card-center">${card.suit}</div>
+      `;
+
+      const display = document.getElementById("cardDisplay");
+      display.innerHTML = '';
+      display.appendChild(cardEl);
+    }
+
     function dealCard() {
       if (deck.length === 0) {
         alert("Deck is empty. Reset to play again.");
@@ -68,7 +230,7 @@
       const countChange = getHiLoValue(card.value);
       runningCount += countChange;
 
-      document.getElementById("cardDisplay").innerText = `${card.value}${card.suit}`;
+      renderCard(card);
       document.getElementById("runningCount").innerText = runningCount;
       document.getElementById("cardsLeft").innerText = deck.length;
 
@@ -77,6 +239,7 @@
 
       document.getElementById("decksLeft").innerText = decksRemaining;
       document.getElementById("trueCount").innerText = trueCount;
+      updateDeckVisual();
     }
 
     function resetDeck() {
@@ -86,8 +249,33 @@
       document.getElementById("cardsLeft").innerText = deck.length;
       document.getElementById("decksLeft").innerText = totalDecks;
       document.getElementById("trueCount").innerText = 0;
-      document.getElementById("cardDisplay").innerText = 'Deck Reset. Ready to deal.';
+
+      document.getElementById("cardDisplay").innerHTML = `
+        <div style="font-size: 20px; color: #fff;">Deck Reset. Ready to deal.</div>
+      `;
+      updateDeckVisual();
     }
+
+    function toggleStats() {
+      const stats = document.getElementById("statsSection");
+      const btn = event.target;
+      
+      if (stats.style.display === "none") {
+        stats.style.display = "block";
+        btn.innerText = "Hide Stats";
+      } else {
+        stats.style.display = "none";
+        btn.innerText = "Reveal Stats";
+      }
+    }
+    function updateDeckVisual() {
+      const stackEl = document.getElementById("deckStack");
+      const maxHeight = 300; // px for 6 full decks
+      const currentHeight = (deck.length / (totalDecks * 52)) * maxHeight;
+      stackEl.style.height = `${currentHeight}px`;
+    }
+
+
 
     // Init on load
     resetDeck();
